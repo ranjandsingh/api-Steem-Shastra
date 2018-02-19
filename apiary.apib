@@ -1,0 +1,2132 @@
+FORMAT: 1A
+HOST: https://api.utopian.io/api
+
+# Utopian
+
+The web API that powers https://utopian.io, the project that rewards hard working
+open source contributors. Data is split between the STEEM blockchain and the API
+server to ensure a reliable and stable platform for all of its users. A centralized
+API allows a separate permissions model to be embedded within the server to overcome
+any limitations the blockchain has to achieve Utopian's goal. Funds are effectively
+paid through the STEEM blockchain.
+
+## Authentication [/]
+
+For external apps that want to enable Utopian posting, the author of that post
+must exist on the Utopian platform. This is to ensure the moderation cannot be
+hindered. External apps can use https://utopian.io/connect for the `redirect_uri`
+and specify their own redirection endpoint to the `state` when authenticating with
+SteemConnect2.
+
+Example:
+
+`https://v2.steemconnect.com/oauth2/authorize?client_id=utopian.app&response_type=code&redirect_uri=https://utopian.io/connect&state=https://google.com&scope=vote,comment,comment_delete,comment_options,custom_json,claim_reward_balance,offline`
+This will redirect the user to [Google](https://google.com). However for security,
+the `session` ID will not be released to the redirection callback.
+
+### Login [POST /login]
+
+Logs in the user using SteemConnect2 after they confirmed they want to login using
+the OAuth workflow. This is required for full interaction with the STEEM blockchain.
+If the user does not exist, they will automatically be created.
+
+The following are the required scopes for a successful authentication:
+- vote
+- comment
+- comment\_delete
+- comment\_options
+- custom\_json
+- claim\_reward\_balance
+- offline
+
++ Request (application/json)
+    + Attributes
+        + code (string, required) - OAuth code.
+
++ Response 200 (application/json)
+
+        {
+            "session": "secret-session-id",
+            "expiry": 1516139588,
+            "user": "elear"
+        }
+
+### Logout [POST /logout]
+
+Destroys the session, rendering it unusable with endpoints that require an
+authenticated user.
+
++ Request
+
+    + Headers
+
+            session: secret-session
+
++ Response 200 (plain/text)
+
+## Posts Collection [/posts]
+
+Endpoints for manipulating posts in the local database and the STEEM blockchain.
+
+### Get An Individual Post [GET /posts/{author}/{permlink}]
+
++ Parameters
+    + author (string, required) - Post author.
+        The author must not include the `@` prefix.
+
+    + permlink (string, required) - Post permlink.
+
++ Response 200 (application/json)
+
+        {
+            "total": 1,
+            "results": [
+                {
+                    "id": 17351405,
+                    "author": "utopian-io",
+                    "permlink": "utopian-weekly-1-the-weekly-open-source-newsletter",
+                    "category": "utopian-io",
+                    "parent_author": "",
+                    "parent_permlink": "utopian-io",
+                    "title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+                    "body": "<truncated for brevity>",
+                    "json_metadata": {
+                        "community": "utopian",
+                        "type": "blog",
+                        "format": "markdown",
+                        "app": "utopian/1.0.0",
+                        "links": [
+                            "https://utopian.io"
+                        ],
+                        "image": [
+                            "https://steemitimages.com/DQmeJMFbZ76XVMy5RLP6StyUKXCh6DHVFyBWJLTRZ96FgdK/header.png"
+                        ],
+                        "users": [
+                            "dontstopmenow",
+                            "misterdelegation",
+                            "ned",
+                            "freedom",
+                            "transisto",
+                            "wackou"
+                        ],
+                        "tags": [
+                            "utopian-io",
+                            "newsletter",
+                            "weekly",
+                            "opensource",
+                            "steemdev"
+                        ],
+                        "moderator": {
+                            "account": "elear",
+                            "reviewed": true,
+                            "pending": false,
+                            "flagged": false
+                        }
+                    },
+                    "last_update": "2017-11-11T16:16:42",
+                    "created": "2017-11-10T20:28:30",
+                    "active": "2017-11-15T15:24:42",
+                    "last_payout": "2017-11-17T20:28:30",
+                    "depth": 0,
+                    "children": 30,
+                    "net_rshares": 0,
+                    "abs_rshares": 0,
+                    "vote_rshares": 0,
+                    "children_abs_rshares": 277222940,
+                    "cashout_time": "1969-12-31T23:59:59",
+                    "max_cashout_time": "1969-12-31T23:59:59",
+                    "total_vote_weight": 0,
+                    "reward_weight": 10000,
+                    "total_payout_value": "123.770 SBD",
+                    "curator_payout_value": "6.044 SBD",
+                    "author_rewards": 132660,
+                    "net_votes": 217,
+                    "root_comment": 17351405,
+                    "max_accepted_payout": "1000000.000 SBD",
+                    "percent_steem_dollars": 10000,
+                    "allow_replies": true,
+                    "allow_votes": true,
+                    "allow_curation_rewards": true,
+                    "url": "/utopian-io/@utopian-io/utopian-weekly-1-the-weekly-open-source-newsletter",
+                    "root_title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+                    "pending_payout_value": "0.000 SBD",
+                    "total_pending_payout_value": "0.000 STEEM",
+                    "author_reputation": 23617985441781,
+                    "promoted": "0.000 SBD",
+                    "body_length": 0,
+                    "replies": [],
+                    "reblogged_by": [],
+                    "beneficiaries": [],
+                    "active_votes": [
+                        {
+                            "voter": "elear",
+                            "weight": 92605,
+                            "rshares": "1553646768504",
+                            "percent": 10000,
+                            "reputation": "6916750490835",
+                            "time": "2017-11-11T07:09:33"
+                        }
+                    ],
+                    "moderator": "elear",
+                    "flagged": false,
+                    "pending": false,
+                    "reviewed": true
+                }
+
+            ]
+        }
+
+### Get Post URL by ID [GET /posts/byid/{id}]
+
++ Parameters
+    + id (number, required) - ID of the post in the blockchain.
+
++ Response 200 (application/json)
+
+        {
+            "url": "/utopian-io/@utopian-io/utopian-weekly-1-the-weekly-open-source-newsletter"
+        }
+
+### Query Posts [GET /posts{?limit,skip,section,type,sortBy,filterBy,status,projectId,platform,author,moderator,bySimilarity}]
+
++ Parameters
+    + limit (number, required) - Number of posts to return.
+
+    + skip (number, optional) - Number of posts to skip.
+
+    + section (enum[string], optional) - Section to filter by.
+        If section is `project` then `projectId` and `platform` must be specified.
+        If section is `author` then `author` must be specified.
+        + Default: `all`
+        + Members
+            + `project`
+            + `author`
+            + `all`
+
+    + type (enum[string], optional) - The type of the post to filter from the results.
+        + Default: `all`
+        + Members
+            + `all`
+            + `sub-projects`
+            + `tutorials`
+            + `video-tutorials`
+            + `copywriting`
+            + `blog`
+            + `task-ideas`
+            + `ideas`
+            + `task-development`
+            + `development`
+            + `task-bug-hunting`
+            + `bug-hunting`
+            + `task-translations`
+            + `translations`
+            + `task-analysis`
+            + `analysis`
+            + `task-graphics`
+            + `graphics`
+            + `task-social`
+            + `social`
+            + `task-documentation`
+            + `documentation`
+
+    + sortBy (enum[string], optional) - Method used for sorting posts.
+        This parameter has no effect when used with `bySimilarity`.
+        + Default: `created`
+        + Members
+            + `created`
+            + `votes`
+
+    + filterBy (enum[string], optional) - Method used for filtering posts.
+        When filtering by `review`, any posts that have already been reviewed will be
+        excluded from the results. The `active` filter excludes any posts that
+        haven't paid active and vice versa for the `inactive` filter.
+        + Default: `any`
+        + Members
+            + `any`
+            + `review`
+            + `active`
+            + `inactive`
+
+    + status (enum[string], optional) - Status to filter posts by.
+        + Default: `any`
+        + Members
+            + `any`
+            + `pending`
+            + `reviewed`
+
+    + projectId (number, optional) - Retrieve posts by project ID.
+        This parameter only takes effect when `section` is set to `project`.
+
+    + platform (enum[string], optional) - Retrieve posts by platform.
+        This parameter only takes effect when `section` is set to `project`.
+        + Members
+            + `github`
+
+    + author (string, optional) - Retrieve posts by a specific author.
+        This parameter only takes effect when `section` is set to `author`.
+
+    + moderator (string, optional) - Moderator to use from moderated posts.
+        When `status` is set to `pending`, the results will only return posts that
+        have been moderated from this moderator with the `pending` status. When
+        `filterBy` is set to `review` any posts moderated by this moderator will be
+        excluded. Without those specific conditions, this parameter has no effect.
+
+    + bySimilarity (string, optional) - Similar post search by title and body.
+        When specified, `sort` is ignored as the results are sorted by the score of
+        how close a post matches the content provided in this parameter.
+
++ Response 200 (application/json)
+
+        {
+            "total": 1,
+            "results": [
+                {
+                    "id": 17351405,
+                    "author": "utopian-io",
+                    "permlink": "utopian-weekly-1-the-weekly-open-source-newsletter",
+                    "category": "utopian-io",
+                    "parent_author": "",
+                    "parent_permlink": "utopian-io",
+                    "title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+                    "body": "<truncated for brevity>",
+                    "json_metadata": {
+                        "community": "utopian",
+                        "type": "blog",
+                        "format": "markdown",
+                        "app": "utopian/1.0.0",
+                        "links": [
+                            "https://utopian.io"
+                        ],
+                        "image": [
+                            "https://steemitimages.com/DQmeJMFbZ76XVMy5RLP6StyUKXCh6DHVFyBWJLTRZ96FgdK/header.png"
+                        ],
+                        "users": [
+                            "dontstopmenow",
+                            "misterdelegation",
+                            "ned",
+                            "freedom",
+                            "transisto",
+                            "wackou"
+                        ],
+                        "tags": [
+                            "utopian-io",
+                            "newsletter",
+                            "weekly",
+                            "opensource",
+                            "steemdev"
+                        ],
+                        "moderator": {
+                            "account": "elear",
+                            "reviewed": true,
+                            "pending": false,
+                            "flagged": false
+                        }
+                    },
+                    "last_update": "2017-11-11T16:16:42",
+                    "created": "2017-11-10T20:28:30",
+                    "active": "2017-11-15T15:24:42",
+                    "last_payout": "2017-11-17T20:28:30",
+                    "depth": 0,
+                    "children": 30,
+                    "net_rshares": 0,
+                    "abs_rshares": 0,
+                    "vote_rshares": 0,
+                    "children_abs_rshares": 277222940,
+                    "cashout_time": "1969-12-31T23:59:59",
+                    "max_cashout_time": "1969-12-31T23:59:59",
+                    "total_vote_weight": 0,
+                    "reward_weight": 10000,
+                    "total_payout_value": "123.770 SBD",
+                    "curator_payout_value": "6.044 SBD",
+                    "author_rewards": 132660,
+                    "net_votes": 217,
+                    "root_comment": 17351405,
+                    "max_accepted_payout": "1000000.000 SBD",
+                    "percent_steem_dollars": 10000,
+                    "allow_replies": true,
+                    "allow_votes": true,
+                    "allow_curation_rewards": true,
+                    "url": "/utopian-io/@utopian-io/utopian-weekly-1-the-weekly-open-source-newsletter",
+                    "root_title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+                    "pending_payout_value": "0.000 SBD",
+                    "total_pending_payout_value": "0.000 STEEM",
+                    "author_reputation": 23617985441781,
+                    "promoted": "0.000 SBD",
+                    "body_length": 0,
+                    "replies": [],
+                    "reblogged_by": [],
+                    "beneficiaries": [],
+                    "active_votes": [
+                        {
+                            "voter": "elear",
+                            "weight": 92605,
+                            "rshares": "1553646768504",
+                            "percent": 10000,
+                            "reputation": "6916750490835",
+                            "time": "2017-11-11T07:09:33"
+                        }
+                    ],
+                    "moderator": "elear",
+                    "flagged": false,
+                    "pending": false,
+                    "reviewed": true
+                }
+
+            ]
+        }
+
+### Query Top Projects And Contributions [GET /posts/top{?limit,start_date,end_date,sort_by,retrieve_by,only_new}]
+
++ Parameters
+    + limit (number, optional) - Number of posts to return.
+        + Default: `5`
+
+    + start_date (string|number, optional) - Start window of the top contributions.
+        Defaults to epoch time 0. Example value is `2017-12-01Z`. This value
+        accepts anything `new Date` in JavaScript will allow.
+
+    + end_date (string|number, optional) - End window of the top contributions.
+        Defaults to the current time. Example value is `2017-12-08Z`. This value
+        accepts anything `new Date` in JavaScript will allow.
+
+    + sort_by (enum[string], optional) - Sorting method.
+        Sorts the results based on the provided sorting method.
+        + Default: `contributions`
+        + Members
+            + `contributions`
+            + `rewards`
+
+    + retrieve_by (enum[string], optional) - Retrieve posts or projects.
+        The results will return individual contributions or the top projects on
+        the platform.
+        + Default: `projects`
+        + Members
+            + `projects`
+            + `contributions`
+
+    + only_new (boolean, optional) - Retrieve only new projects.
+        Excludes any contributions that are older than the `start_date` during the
+        aggregation for determining top projects.
+        + Default: `false`
+
++ Response 200 (application/json)
+
+        [
+            {
+                "_id":"magento/magento2",
+                "count":91,
+                "rewards":1362.1380000000004,
+                "github":{
+                    "id":2884111,
+                    "name":"magento2",
+                    "html_url":"https://github.com/magento/magento2",
+                    "description":"All Submissions you make to Magento Inc. (“Magento\") through GitHub are subject to the following terms and conditions: (1) You grant Magento a perpetual, worldwide, non-exclusive, no charge, royalty free, irrevocable license under your applicable copyrights and patents to reproduce, prepare derivative works of, display, publically perform, sublicense and distribute any feedback, ideas, code, or other information (“Submission\") you submit through GitHub. (2) Your Submission is an original work of authorship and you are the owner or are legally entitled to grant the license stated above. (3) You agree to the Contributor License Agreement found here:  https://github.com/magento/magento2/blob/master/CONTRIBUTOR_LICENSE_AGREEMENT.html",
+                    "homepage":"http://www.magento.com",
+                    "language":"PHP",
+                    "license":null
+                },
+                "project_url":"https://utopian.io/project/magento/magento2/github/2884111/all"
+            },
+            {
+                "_id":"electron/electron",
+                "count":81,
+                "rewards":1260.389,
+                "github":{
+                    "id":9384267,
+                    "name":"electron",
+                    "html_url":"https://github.com/electron/electron",
+                    "description":"Build cross platform desktop apps with JavaScript, HTML, and CSS",
+                    "homepage":"https://electronjs.org",
+                    "language":"C++",
+                    "license":{
+                        "key":"mit",
+                        "name":"MIT License",
+                        "spdx_id":"MIT",
+                        "url":"https://api.github.com/licenses/mit"
+                    }
+                },
+                "project_url":"https://utopian.io/project/electron/electron/github/9384267/all"
+            },
+            {
+                "_id":"facebook/react",
+                "count":81,
+                "rewards":1410.1,
+                "github":{
+                    "id":10270250,
+                    "name":"react",
+                    "html_url":"https://github.com/facebook/react",
+                    "description":"A declarative, efficient, and flexible JavaScript library for building user interfaces.",
+                    "homepage":"https://reactjs.org",
+                    "language":"JavaScript",
+                    "license":{
+                        "key":"mit",
+                        "name":"MIT License",
+                        "spdx_id":"MIT",
+                        "url":"https://api.github.com/licenses/mit"
+                    }
+                },
+                "project_url":"https://utopian.io/project/facebook/react/github/10270250/all"
+            },
+            {
+                "_id":"opencart/opencart",
+                "count":68,
+                "rewards":1047.8929999999996,
+                "github":{
+                    "id":2141186,
+                    "name":"opencart",
+                    "html_url":"https://github.com/opencart/opencart",
+                    "description":"A free shopping cart system. OpenCart is an open source PHP-based online e-commerce solution.",
+                    "homepage":"http://www.opencart.com",
+                    "language":"PHP",
+                    "license":{
+                        "key":"gpl-3.0",
+                        "name":"GNU General Public License v3.0",
+                        "spdx_id":"GPL-3.0",
+                        "url":"https://api.github.com/licenses/gpl-3.0"
+                    }
+                },
+                "project_url":"https://utopian.io/project/opencart/opencart/github/2141186/all"
+            },
+            {
+                "_id":"steemit/condenser",
+                "count":61,
+                "rewards":1339.2559999999999,
+                "github":{
+                    "id":59213335,
+                    "name":"condenser",
+                    "html_url":"https://github.com/steemit/condenser",
+                    "description":"The social application web front-end to the Steem Blockchain.",
+                    "homepage":"https://steemit.com",
+                    "language":"JavaScript",
+                    "license":null
+                },
+                "project_url":"https://utopian.io/project/steemit/condenser/github/59213335/all"
+            }
+        ]
+
+### Add A Post [POST /posts]
+
++ Request (application/json)
+    The post being added must be compatible to the Utopian platform. Posts that are
+    invalid will return a `bad request` status. If the post already exists the
+    existing data will be returned.
+
+    + Attributes
+        + author (string, required) - Post author.
+            The author must not include the `@` prefix.
+
+        + permlink (string, required) - Post permlink.
+
++ Response 200 (application/json)
+
+        {
+            "id": 17351405,
+            "author": "utopian-io",
+            "permlink": "utopian-weekly-1-the-weekly-open-source-newsletter",
+            "category": "utopian-io",
+            "parent_author": "",
+            "parent_permlink": "utopian-io",
+            "title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+            "body": "<truncated for brevity>",
+            "json_metadata": {
+                "community": "utopian",
+                "type": "blog",
+                "format": "markdown",
+                "app": "utopian/1.0.0",
+                "links": [
+                    "https://utopian.io"
+                ],
+                "image": [
+                    "https://steemitimages.com/DQmeJMFbZ76XVMy5RLP6StyUKXCh6DHVFyBWJLTRZ96FgdK/header.png"
+                ],
+                "users": [
+                    "dontstopmenow",
+                    "misterdelegation",
+                    "ned",
+                    "freedom",
+                    "transisto",
+                    "wackou"
+                ],
+                "tags": [
+                    "utopian-io",
+                    "newsletter",
+                    "weekly",
+                    "opensource",
+                    "steemdev"
+                ],
+                "moderator": {
+                    "account": "elear",
+                    "reviewed": true,
+                    "pending": false,
+                    "flagged": false
+                }
+            },
+            "last_update": "2017-11-11T16:16:42",
+            "created": "2017-11-10T20:28:30",
+            "active": "2017-11-15T15:24:42",
+            "last_payout": "2017-11-17T20:28:30",
+            "depth": 0,
+            "children": 30,
+            "net_rshares": 0,
+            "abs_rshares": 0,
+            "vote_rshares": 0,
+            "children_abs_rshares": 277222940,
+            "cashout_time": "1969-12-31T23:59:59",
+            "max_cashout_time": "1969-12-31T23:59:59",
+            "total_vote_weight": 0,
+            "reward_weight": 10000,
+            "total_payout_value": "123.770 SBD",
+            "curator_payout_value": "6.044 SBD",
+            "author_rewards": 132660,
+            "net_votes": 217,
+            "root_comment": 17351405,
+            "max_accepted_payout": "1000000.000 SBD",
+            "percent_steem_dollars": 10000,
+            "allow_replies": true,
+            "allow_votes": true,
+            "allow_curation_rewards": true,
+            "url": "/utopian-io/@utopian-io/utopian-weekly-1-the-weekly-open-source-newsletter",
+            "root_title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+            "pending_payout_value": "0.000 SBD",
+            "total_pending_payout_value": "0.000 STEEM",
+            "author_reputation": 23617985441781,
+            "promoted": "0.000 SBD",
+            "body_length": 0,
+            "replies": [],
+            "reblogged_by": [],
+            "beneficiaries": [],
+            "active_votes": [
+                {
+                    "voter": "elear",
+                    "weight": 92605,
+                    "rshares": "1553646768504",
+                    "percent": 10000,
+                    "reputation": "6916750490835",
+                    "time": "2017-11-11T07:09:33"
+                }
+            ],
+            "moderator": "elear",
+            "flagged": false,
+            "pending": false,
+            "reviewed": true
+        }
+
+### Edit A Post [POST /posts/edit]
+
++ Request (application/json)
+    Edits a post that _must exist_ on the Utopian platform. The `title`, `body`,
+    and `json_metadata` do not have to be changed, allowing editing of only a
+    single attribute. This end point has cross editing capabilities that are
+    useful for moderators. Users lacking permission to cross edit will receive
+    a `forbidden` status.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + author (string, required) - Post author.
+            The author must not include the `@` prefix. The author must match
+            the authenticated user. Otherwise the user must be a moderator to cross
+            edit another user's post.
+
+        + permlink (string, required) - Post permlink.
+
+        + title (string, required) - Edited title of the post.
+
+        + body (string, required) - Edited body of the post.
+
+        + json_metadata (object, required) - Edited JSON Metadata of the post.
+
++ Response 200 (application/json)
+
+        {
+            "id": 17351405,
+            "author": "utopian-io",
+            "permlink": "utopian-weekly-1-the-weekly-open-source-newsletter",
+            "category": "utopian-io",
+            "parent_author": "",
+            "parent_permlink": "utopian-io",
+            "title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+            "body": "<truncated for brevity>",
+            "json_metadata": {
+                "community": "utopian",
+                "type": "blog",
+                "format": "markdown",
+                "app": "utopian/1.0.0",
+                "links": [
+                    "https://utopian.io"
+                ],
+                "image": [
+                    "https://steemitimages.com/DQmeJMFbZ76XVMy5RLP6StyUKXCh6DHVFyBWJLTRZ96FgdK/header.png"
+                ],
+                "users": [
+                    "dontstopmenow",
+                    "misterdelegation",
+                    "ned",
+                    "freedom",
+                    "transisto",
+                    "wackou"
+                ],
+                "tags": [
+                    "utopian-io",
+                    "newsletter",
+                    "weekly",
+                    "opensource",
+                    "steemdev"
+                ],
+                "moderator": {
+                    "account": "elear",
+                    "reviewed": true,
+                    "pending": false,
+                    "flagged": false
+                }
+            },
+            "last_update": "2017-11-11T16:16:42",
+            "created": "2017-11-10T20:28:30",
+            "active": "2017-11-15T15:24:42",
+            "last_payout": "2017-11-17T20:28:30",
+            "depth": 0,
+            "children": 30,
+            "net_rshares": 0,
+            "abs_rshares": 0,
+            "vote_rshares": 0,
+            "children_abs_rshares": 277222940,
+            "cashout_time": "1969-12-31T23:59:59",
+            "max_cashout_time": "1969-12-31T23:59:59",
+            "total_vote_weight": 0,
+            "reward_weight": 10000,
+            "total_payout_value": "123.770 SBD",
+            "curator_payout_value": "6.044 SBD",
+            "author_rewards": 132660,
+            "net_votes": 217,
+            "root_comment": 17351405,
+            "max_accepted_payout": "1000000.000 SBD",
+            "percent_steem_dollars": 10000,
+            "allow_replies": true,
+            "allow_votes": true,
+            "allow_curation_rewards": true,
+            "url": "/utopian-io/@utopian-io/utopian-weekly-1-the-weekly-open-source-newsletter",
+            "root_title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+            "pending_payout_value": "0.000 SBD",
+            "total_pending_payout_value": "0.000 STEEM",
+            "author_reputation": 23617985441781,
+            "promoted": "0.000 SBD",
+            "body_length": 0,
+            "replies": [],
+            "reblogged_by": [],
+            "beneficiaries": [],
+            "active_votes": [
+                {
+                    "voter": "elear",
+                    "weight": 92605,
+                    "rshares": "1553646768504",
+                    "percent": 10000,
+                    "reputation": "6916750490835",
+                    "time": "2017-11-11T07:09:33"
+                }
+            ],
+            "moderator": "elear",
+            "flagged": false,
+            "pending": false,
+            "reviewed": true
+        }
+
+### Update Or Review A Post [PUT /posts/{author}/{permlink}]
+
++ Parameters
+    + author (string, required) - Post author.
+        The author must not include the `@` prefix.
+
+    + permlink (string, required) - Post permlink.
+
++ Request (application/json)
+    Any user can use this endpoint to update their post in the database. This
+    will synchronize the post in the blockchain to the database.
+    
+    To moderate post, the `moderator` parameter must be provided. The authenticated
+    user must be a moderator otherwise a `forbidden` status is returned. If any one
+    of the boolean parameters are `true` then the rest must be `false`. Otherwise
+    the behavior of this API is undefined.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + flagged (boolean, optional) - Flag the contribution.
+        + reviewed (boolean, optional) - Approve the contribution.
+        + pending (boolean, optional) - Moderator is awaiting updates by the original poster to the contribution.
+        + reserved (boolean, optional) - Reset all the parameters except for `moderator`.
+        + moderator (string, optional) - Moderator of the contribution.
+
++ Response 200 (application/json)
+
+        {
+            "total": 1,
+            "results": [
+                {
+                    "id": 17351405,
+                    "author": "utopian-io",
+                    "permlink": "utopian-weekly-1-the-weekly-open-source-newsletter",
+                    "category": "utopian-io",
+                    "parent_author": "",
+                    "parent_permlink": "utopian-io",
+                    "title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+                    "body": "<truncated for brevity>",
+                    "json_metadata": {
+                        "community": "utopian",
+                        "type": "blog",
+                        "format": "markdown",
+                        "app": "utopian/1.0.0",
+                        "links": [
+                            "https://utopian.io"
+                        ],
+                        "image": [
+                            "https://steemitimages.com/DQmeJMFbZ76XVMy5RLP6StyUKXCh6DHVFyBWJLTRZ96FgdK/header.png"
+                        ],
+                        "users": [
+                            "dontstopmenow",
+                            "misterdelegation",
+                            "ned",
+                            "freedom",
+                            "transisto",
+                            "wackou"
+                        ],
+                        "tags": [
+                            "utopian-io",
+                            "newsletter",
+                            "weekly",
+                            "opensource",
+                            "steemdev"
+                        ],
+                        "moderator": {
+                            "account": "elear",
+                            "reviewed": true,
+                            "pending": false,
+                            "flagged": false
+                        }
+                    },
+                    "last_update": "2017-11-11T16:16:42",
+                    "created": "2017-11-10T20:28:30",
+                    "active": "2017-11-15T15:24:42",
+                    "last_payout": "2017-11-17T20:28:30",
+                    "depth": 0,
+                    "children": 30,
+                    "net_rshares": 0,
+                    "abs_rshares": 0,
+                    "vote_rshares": 0,
+                    "children_abs_rshares": 277222940,
+                    "cashout_time": "1969-12-31T23:59:59",
+                    "max_cashout_time": "1969-12-31T23:59:59",
+                    "total_vote_weight": 0,
+                    "reward_weight": 10000,
+                    "total_payout_value": "123.770 SBD",
+                    "curator_payout_value": "6.044 SBD",
+                    "author_rewards": 132660,
+                    "net_votes": 217,
+                    "root_comment": 17351405,
+                    "max_accepted_payout": "1000000.000 SBD",
+                    "percent_steem_dollars": 10000,
+                    "allow_replies": true,
+                    "allow_votes": true,
+                    "allow_curation_rewards": true,
+                    "url": "/utopian-io/@utopian-io/utopian-weekly-1-the-weekly-open-source-newsletter",
+                    "root_title": "Utopian Weekly #1 - The Weekly Open Source Newsletter",
+                    "pending_payout_value": "0.000 SBD",
+                    "total_pending_payout_value": "0.000 STEEM",
+                    "author_reputation": 23617985441781,
+                    "promoted": "0.000 SBD",
+                    "body_length": 0,
+                    "replies": [],
+                    "reblogged_by": [],
+                    "beneficiaries": [],
+                    "active_votes": [
+                        {
+                            "voter": "elear",
+                            "weight": 92605,
+                            "rshares": "1553646768504",
+                            "percent": 10000,
+                            "reputation": "6916750490835",
+                            "time": "2017-11-11T07:09:33"
+                        }
+                    ],
+                    "moderator": "elear",
+                    "flagged": false,
+                    "pending": false,
+                    "reviewed": true
+                }
+
+            ]
+        }
+
+## Moderators Collection [/moderators]
+
+### List All Moderators [GET]
+
++ Response 200 (application/json)
+
+        {
+            "total":2,
+            "results":[
+                {
+                    "account":"ruah",
+                    "total_paid_rewards":217.1779654,
+                    "should_receive_rewards":309.2525131114075,
+                    "total_moderated":1718,
+                    "percentage_total_rewards_moderators":7.021989699991825,
+                    "reviewed":true,
+                    "banned":false,
+                    "supermoderator":true,
+                    "total_paid_rewards_steem":412.523540276119
+                },
+                {
+                    "account":"knowledges",
+                    "total_paid_rewards":233.44807579999937,
+                    "should_receive_rewards":316.7873985097275,
+                    "total_moderated":1414,
+                    "percentage_total_rewards_moderators":5.779449031308755,
+                    "banned":false,
+                    "reviewed":true,
+                    "total_paid_rewards_steem":271.8513378616602,
+                    "supermoderator":true
+                }
+            ]
+        }
+
+### Create Moderator [POST]
+
++ Request (application/json)
+    Creates a moderator. The user must be a `supermoderator` to be able to add
+    other moderators, otherwise the `forbidden` status is returned.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + referrer (string, optional) - The referrer of this moderator.
+
++ Response 200 (application/json)
+
+        {
+            "referrer":"utopian-io",
+            "account":"test",
+            "banned":false,
+            "reviewed":true,
+            "supermoderator":false,
+            "apprentice":true,
+            "total_paid_rewards_steem":0,
+            "total_moderated":0,
+            "percentage_total_rewards_moderators":0
+        }
+
+### Remove Moderator [POST /moderators/rm]
+
++ Request
+    Removes a moderator. The user must be a `supermoderator` to be able to remove
+    other moderators, otherwise the `forbidden` status is returned. Internally, this
+    bans the moderator, preserving their stats, however they will no longer be
+    listed.
+
+    + Headers
+
+            session: secret-session
+
++ Response 200 (application/json)
+
+        {
+            "referrer":"utopian-io",
+            "account":"test",
+            "banned":true,
+            "reviewed":false,
+            "supermoderator":false,
+            "apprentice":true,
+            "total_paid_rewards_steem":0,
+            "total_moderated":0,
+            "percentage_total_rewards_moderators":0
+        }
+
+## Projects Collection [/projects]
+
+### Get Project [GET /projects/{platform}/{external_id}]
+
++ Parameters
+    + platform (enum[string], required) - Platform the project resides on.
+        + Members
+            + `github`
+
+    + external_id (number, required) - ID of the project on the platform.
+
++ Request
+
+    + Headers
+
+            session: secret-session
+
++ Response 200 (application/json)
+
+        {
+            "name":"busy",
+            "platform":"github",
+            "external_id":64382195,
+            "steem_account":{
+                "account":"busy.utp"
+            },
+            "sponsorship":{
+                "$init":true,
+                "rejected":{
+                    "message":"",
+                    "status":false
+                },
+                "enabled":true
+            },
+            "sponsors":[
+                {
+                    "account":"utopian-io",
+                    "vesting_shares":0
+                }
+            ]
+        }
+
+### Create Project [POST /projects]
+
++ Request (application/json)
+    Creates a project that is ready to be reviewed. When the project is approved
+    it will have a sponsor account used to upvote contributions.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + owner (string, required) - The owner must be a project maintainer.
+        + platform (string, required) - The platform the project resides on.
+        + external_id (number, required) - The external ID which represents the project on the platform.
+        + project_name (string, required) - The name of the project.
+
++ Response 200 (application/json)
+
+        {
+            "name":"busy",
+            "platform":"github",
+            "external_id":64382195,
+            "steem_account":{
+                "account":"busy.utp"
+            },
+            "sponsorship":{
+                "$init":true,
+                "rejected":{
+                    "message":"",
+                    "status":false
+                },
+                "enabled":false
+            },
+            "sponsors":[]
+        }
+
+### Add Sponsor [POST /projects/{platform}/{external_id}/sponsors]
+
++ Parameters
+    + platform (enum[string], required) - Platform the project resides on.
+        + Members
+            + `github`
+
+    + external_id (number, required) - ID of the project on the platform.
+
++ Request
+    Sets the user as a sponsor of the project.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + sponsor (string, required) - The sponsor of the project.
+
++ Response 200 (application/json)
+
+        {
+            "account": "elear"
+        }
+
+### Vote With Sponsors [POST /projects/{platform}/{external_id}/sponsors/vote]
+
++ Parameters
+    + platform (enum[string], required) - Platform the project resides on.
+        + Members
+            + `github`
+
+    + external_id (number, required) - ID of the project on the platform.
+
++ Request
+    Sets the user as a sponsor of the project.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + author (string, required) - Post author to vote.
+        + permlink (string, required) - Post permlink to vote.
+        + vote (number, required) - Vote weight to give on the post.
+            Parameter can be a maximum of 10000 for a 100% vote.
+
++ Response 200 (application/json)
+
+        {
+            "message": "Vote broadcasted"
+        }
+
+## Sponsors Collection [/sponsors]
+
+### List Sponsors [GET]
+
++ Response 200 (application/json)
+
+        {
+            "total":2,
+            "results":[
+                {
+                    "_id":"59e77cc980506762dfc04bfa",
+                    "account":"freedom",
+                    "vesting_shares":2500000000,
+                    "percentage_total_vesting_shares":33.07621553942378,
+                    "total_paid_rewards":7826.717858000029,
+                    "should_receive_rewards":0,
+                    "is_witness":true,
+                    "opted_out":false,
+                    "total_paid_rewards_steem":5733.586625333009,
+                    "projects":[]
+                },
+                {
+                    "account":"misterdelegation",
+                    "vesting_shares":2083312462,
+                    "percentage_total_vesting_shares":27.563236811631846,
+                    "total_paid_rewards":656.2303994999997,
+                    "should_receive_rewards":5239.977898655467,
+                    "is_witness":false,
+                    "opted_out":true,
+                    "total_paid_rewards_steem":187.49439985714278,
+                    "projects":[]
+                }
+            ]
+        }
+
+### Add Sponsor [POST]
+
++ Request (application/json)
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + sponsor (string, required) - Sponsor account
+
++ Response 200 (application/json)
+
+        {
+            "account":"elear",
+            "vesting_shares":0,
+            "percentage_total_vesting_shares":0,
+            "total_paid_rewards":0,
+            "total_paid_rewards_steem":0,
+            "should_receive_rewards":0,
+            "opted_out":false,
+            "is_witness":false,
+            "projects":[]
+        }
+
+
+## Stats collection [/stats]
+
+### Get Stats [GET]
+
++ Response 200 (application/json)
+
+        {
+            "stats":{
+                "_id":"59e866ab80506762dfc1c240",
+                "total_paid_rewards":424296.91899999947,
+                "total_pending_rewards":55071.403999997914,
+                "total_paid_authors":305910.68000000174,
+                "total_paid_curators":118386.23900000029,
+                "__v":940,
+                "stats_moderator_shares_last_check":"2018-01-18T22:44:03.431Z",
+                "stats_sponsors_shares_last_check":"2018-01-18T22:33:02.836Z",
+                "stats_total_pending_last_check":"2018-01-18T22:41:01.997Z",
+                "stats_total_paid_last_check":"2018-01-18T22:42:01.953Z",
+                "stats_paid_moderators_last_check":"2017-12-21T18:02:02.510Z",
+                "stats_paid_sponsors_last_check":"2017-12-21T18:01:02.641Z",
+                "stats_categories_last_check":"2018-01-18T22:00:02.364Z",
+                "stats_last_updated_posts":"2018-01-18T22:40:48.729Z",
+                "bot_is_voting":false,
+                "last_limit_comment_benefactor":11136,
+                "stats_total_pending_last_post_date":"2018-01-18T22:37:27",
+                "stats_total_paid_last_post_date":"2018-01-11T22:39:24",
+                "stats_total_moderated":25490,
+                "categories":{
+                    "blog":{
+                        "average_tags_per_post":4.713615023474178,
+                        "total_tags":1004,
+                        "average_links_per_post":8.55868544600939,
+                        "total_links":1823,
+                        "average_images_per_post":5.647887323943662,
+                        "total_images":1203,
+                        "average_posts_length":5969.422535211268,
+                        "total_posts_length":1271487,
+                        "average_paid_curators":8.260042253521124,
+                        "total_paid_curators":1759.3889999999997,
+                        "average_paid_authors":23.769478873239425,
+                        "total_paid_authors":5062.898999999998,
+                        "total_paid":6822.288000000001,
+                        "average_likes_per_post":50.21596244131455,
+                        "total_likes":10696,
+                        "total_posts":213
+                    },
+                    "task-social":{
+                        "average_tags_per_post":5,
+                        "total_tags":10,
+                        "average_links_per_post":4.5,
+                        "total_links":9,
+                        "average_images_per_post":2,
+                        "total_images":4,
+                        "average_posts_length":1490,
+                        "total_posts_length":2980,
+                        "average_paid_curators":10.2085,
+                        "total_paid_curators":20.417,
+                        "average_paid_authors":25.889,
+                        "total_paid_authors":51.778,
+                        "total_paid":72.195,
+                        "average_likes_per_post":65.5,
+                        "total_likes":131,
+                        "total_posts":2
+                    },
+                    "task-documentation":{
+                        "average_tags_per_post":3,
+                        "total_tags":3,
+                        "average_links_per_post":2,
+                        "total_links":2,
+                        "average_images_per_post":0,
+                        "total_images":0,
+                        "average_posts_length":1057,
+                        "total_posts_length":1057,
+                        "average_paid_curators":6.652,
+                        "total_paid_curators":6.652,
+                        "average_paid_authors":15.61,
+                        "total_paid_authors":15.61,
+                        "total_paid":22.262,
+                        "average_likes_per_post":34,
+                        "total_likes":34,
+                        "total_posts":1
+                    },
+                    "task-graphics":{
+                        "average_tags_per_post":4.586206896551724,
+                        "total_tags":133,
+                        "average_links_per_post":4.379310344827586,
+                        "total_links":127,
+                        "average_images_per_post":2.7241379310344827,
+                        "total_images":79,
+                        "average_posts_length":2740.137931034483,
+                        "total_posts_length":79464,
+                        "average_paid_curators":11.581965517241379,
+                        "total_paid_curators":335.877,
+                        "average_paid_authors":30.145379310344826,
+                        "total_paid_authors":874.2159999999999,
+                        "total_paid":1210.0929999999998,
+                        "average_likes_per_post":42.206896551724135,
+                        "total_likes":1224,
+                        "total_posts":29
+                    },
+                    "task-translations":{
+                        "average_tags_per_post":5,
+                        "total_tags":20,
+                        "average_links_per_post":9.5,
+                        "total_links":38,
+                        "average_images_per_post":1.25,
+                        "total_images":5,
+                        "average_posts_length":3115.25,
+                        "total_posts_length":12461,
+                        "average_paid_curators":14.190249999999999,
+                        "total_paid_curators":56.760999999999996,
+                        "average_paid_authors":50.109249999999996,
+                        "total_paid_authors":200.43699999999998,
+                        "total_paid":257.198,
+                        "average_likes_per_post":70,
+                        "total_likes":280,
+                        "total_posts":4
+                    },
+                    "task-development":{
+                        "average_tags_per_post":4.511111111111111,
+                        "total_tags":203,
+                        "average_links_per_post":4.711111111111111,
+                        "total_links":212,
+                        "average_images_per_post":2.5555555555555554,
+                        "total_images":115,
+                        "average_posts_length":3061.1111111111113,
+                        "total_posts_length":137750,
+                        "average_paid_curators":13.164622222222217,
+                        "total_paid_curators":592.4079999999998,
+                        "average_paid_authors":41.81635555555556,
+                        "total_paid_authors":1881.7360000000003,
+                        "total_paid":2474.1440000000002,
+                        "average_likes_per_post":88.11111111111111,
+                        "total_likes":3965,
+                        "total_posts":45
+                    },
+                    "task-ideas":{
+                        "average_tags_per_post":4.3,
+                        "total_tags":43,
+                        "average_links_per_post":2.8,
+                        "total_links":28,
+                        "average_images_per_post":1.9,
+                        "total_images":19,
+                        "average_posts_length":2870,
+                        "total_posts_length":28700,
+                        "average_paid_curators":12.8268,
+                        "total_paid_curators":128.268,
+                        "average_paid_authors":36.138799999999996,
+                        "total_paid_authors":361.388,
+                        "total_paid":489.65599999999995,
+                        "average_likes_per_post":67,
+                        "total_likes":670,
+                        "total_posts":10
+                    },
+                    "social":{
+                        "average_tags_per_post":4.752475247524752,
+                        "total_tags":480,
+                        "average_links_per_post":7.782178217821782,
+                        "total_links":786,
+                        "average_images_per_post":6.752475247524752,
+                        "total_images":682,
+                        "average_posts_length":4350.980198019802,
+                        "total_posts_length":439449,
+                        "average_paid_curators":20.29594059405941,
+                        "total_paid_curators":2049.8900000000003,
+                        "average_paid_authors":58.35912871287127,
+                        "total_paid_authors":5894.271999999998,
+                        "total_paid":7944.161999999996,
+                        "average_likes_per_post":122.4950495049505,
+                        "total_likes":12372,
+                        "total_posts":101
+                    },
+                    "analysis":{
+                        "average_tags_per_post":4.797235023041475,
+                        "total_tags":1041,
+                        "average_links_per_post":7.465437788018433,
+                        "total_links":1620,
+                        "average_images_per_post":5.940092165898617,
+                        "total_images":1289,
+                        "average_posts_length":7911.004608294931,
+                        "total_posts_length":1716688,
+                        "average_paid_curators":17.27291244239631,
+                        "total_paid_curators":3748.2219999999998,
+                        "average_paid_authors":46.96253456221199,
+                        "total_paid_authors":10190.870000000003,
+                        "total_paid":13939.091999999995,
+                        "average_likes_per_post":62.64976958525346,
+                        "total_likes":13595,
+                        "total_posts":217
+                    },
+                    "tutorials":{
+                        "average_tags_per_post":4.485492439722108,
+                        "total_tags":10976,
+                        "average_links_per_post":10.21618308132407,
+                        "total_links":24999,
+                        "average_images_per_post":9.633020024519821,
+                        "total_images":23572,
+                        "average_posts_length":5958.829587249694,
+                        "total_posts_length":14581256,
+                        "average_paid_curators":6.628865958316305,
+                        "total_paid_curators":16220.834999999997,
+                        "average_paid_authors":16.640380874540266,
+                        "total_paid_authors":40719.01200000003,
+                        "total_paid":56939.846999999965,
+                        "average_likes_per_post":22.888843481814465,
+                        "total_likes":56009,
+                        "total_posts":2447
+                    },
+                    "video-tutorials":{
+                        "average_tags_per_post":4.463667820069205,
+                        "total_tags":7740,
+                        "average_links_per_post":2.900230680507497,
+                        "total_links":5029,
+                        "average_images_per_post":0.9838523644752019,
+                        "total_images":1706,
+                        "average_posts_length":1624.8044982698962,
+                        "total_posts_length":2817411,
+                        "average_paid_curators":8.541785467128026,
+                        "total_paid_curators":14811.455999999998,
+                        "average_paid_authors":21.273741637831563,
+                        "total_paid_authors":36888.66799999993,
+                        "total_paid":51700.124,
+                        "average_likes_per_post":20.45674740484429,
+                        "total_likes":35472,
+                        "total_posts":1734
+                    },
+                    "copywriting":{
+                        "average_tags_per_post":3.9310344827586206,
+                        "total_tags":114,
+                        "average_links_per_post":5.827586206896552,
+                        "total_links":169,
+                        "average_images_per_post":3,
+                        "total_images":87,
+                        "average_posts_length":4114.241379310345,
+                        "total_posts_length":119313,
+                        "average_paid_curators":15.577758620689657,
+                        "total_paid_curators":451.75500000000005,
+                        "average_paid_authors":37.95693103448276,
+                        "total_paid_authors":1100.751,
+                        "total_paid":1552.5059999999996,
+                        "average_likes_per_post":22.448275862068964,
+                        "total_likes":651,
+                        "total_posts":29
+                    },
+                    "documentation":{
+                        "average_tags_per_post":4.6521739130434785,
+                        "total_tags":321,
+                        "average_links_per_post":7.304347826086956,
+                        "total_links":504,
+                        "average_images_per_post":3.7681159420289854,
+                        "total_images":260,
+                        "average_posts_length":4603.724637681159,
+                        "total_posts_length":317657,
+                        "average_paid_curators":13.68423188405797,
+                        "total_paid_curators":944.212,
+                        "average_paid_authors":35.65972463768115,
+                        "total_paid_authors":2460.5209999999993,
+                        "total_paid":3404.732999999999,
+                        "average_likes_per_post":37.82608695652174,
+                        "total_likes":2610,
+                        "total_posts":69
+                    },
+                    "graphics":{
+                        "average_tags_per_post":4.659699542782495,
+                        "total_tags":7134,
+                        "average_links_per_post":10.69888961463096,
+                        "total_links":16380,
+                        "average_images_per_post":10.418680600914435,
+                        "total_images":15951,
+                        "average_posts_length":2467.156760287394,
+                        "total_posts_length":3777217,
+                        "average_paid_curators":8.38235924232527,
+                        "total_paid_curators":12833.391999999989,
+                        "average_paid_authors":21.26732723709993,
+                        "total_paid_authors":32560.277999999995,
+                        "total_paid":45393.67000000006,
+                        "average_likes_per_post":21.589157413455258,
+                        "total_likes":33053,
+                        "total_posts":1531
+                    },
+                    "translations":{
+                        "average_tags_per_post":4.074530428249436,
+                        "total_tags":27116,
+                        "average_links_per_post":7.95236664162284,
+                        "total_links":52923,
+                        "average_images_per_post":5.221637866265965,
+                        "total_images":34750,
+                        "average_posts_length":3841.5712997746054,
+                        "total_posts_length":25565657,
+                        "average_paid_curators":6.4125517655897895,
+                        "total_paid_curators":42675.53200000005,
+                        "average_paid_authors":16.0690468820436,
+                        "total_paid_authors":106939.50700000017,
+                        "total_paid":149615.03899999967,
+                        "average_likes_per_post":14.351465063861758,
+                        "total_likes":95509,
+                        "total_posts":6655
+                    },
+                    "bug-hunting":{
+                        "average_tags_per_post":4.163995067817509,
+                        "total_tags":3377,
+                        "average_links_per_post":2.9531442663378544,
+                        "total_links":2395,
+                        "average_images_per_post":2.8655980271270036,
+                        "total_images":2324,
+                        "average_posts_length":1719.525277435265,
+                        "total_posts_length":1394535,
+                        "average_paid_curators":5.2565943279901335,
+                        "total_paid_curators":4263.097999999998,
+                        "average_paid_authors":13.923833538840936,
+                        "total_paid_authors":11292.229,
+                        "total_paid":15555.327000000012,
+                        "average_likes_per_post":26.260172626387178,
+                        "total_likes":21297,
+                        "total_posts":811
+                    },
+                    "development":{
+                        "average_tags_per_post":4.626041666666667,
+                        "total_tags":4441,
+                        "average_links_per_post":5.971875,
+                        "total_links":5733,
+                        "average_images_per_post":3.2979166666666666,
+                        "total_images":3166,
+                        "average_posts_length":3292.496875,
+                        "total_posts_length":3160797,
+                        "average_paid_curators":16.23890104166667,
+                        "total_paid_curators":15589.345000000003,
+                        "average_paid_authors":43.42766979166672,
+                        "total_paid_authors":41690.56300000005,
+                        "total_paid":57279.90800000015,
+                        "average_likes_per_post":47.10104166666667,
+                        "total_likes":45217,
+                        "total_posts":960
+                    },
+                    "sub-projects":{
+                        "average_tags_per_post":5,
+                        "total_tags":25,
+                        "average_links_per_post":10.2,
+                        "total_links":51,
+                        "average_images_per_post":5.4,
+                        "total_images":27,
+                        "average_posts_length":7308.2,
+                        "total_posts_length":36541,
+                        "average_paid_curators":22.148999999999997,
+                        "total_paid_curators":110.74499999999999,
+                        "average_paid_authors":55.71040000000001,
+                        "total_paid_authors":278.552,
+                        "total_paid":389.297,
+                        "average_likes_per_post":79.6,
+                        "total_likes":398,
+                        "total_posts":5
+                    },
+                    "ideas":{
+                        "average_tags_per_post":4.461572052401746,
+                        "total_tags":10217,
+                        "average_links_per_post":3.003930131004367,
+                        "total_links":6879,
+                        "average_images_per_post":3.0737991266375544,
+                        "total_images":7039,
+                        "average_posts_length":2346.6842794759827,
+                        "total_posts_length":5373907,
+                        "average_paid_curators":3.635467685589517,
+                        "total_paid_curators":8325.220999999994,
+                        "average_paid_authors":9.728665938864628,
+                        "total_paid_authors":22278.644999999997,
+                        "total_paid":30603.866000000016,
+                        "average_likes_per_post":23.007423580786025,
+                        "total_likes":52687,
+                        "total_posts":2290
+                    }
+                }
+            }
+        }
+
+## Users Collection [/users]
+
+### Get User [GET /users/{user}]
+
++ Parameters
+    + user (string, required)
+
++ Request (application/json)
+
+    + Headers
+
+            session: secret-session
+
++ Response 200 (application/json)
+
+        {
+            "account": "elear",
+            "banReason": "Ban Reason",
+            "bannedBy": "<utopian-system>",
+            "bannedUntil": "1970-01-01T00:00:00.000Z",
+            "banned": 0,
+            "details": {
+                "recoveryAccount": "steem",
+                "emailVerified": false,
+                "confirmed": true,
+                "connectedToSteem": true,
+                "votingForWitness": true
+            },
+            "github": {
+                "login": "diegopucci",
+                "account": "diegopucci",
+                "scopeVersion": 6,
+                "lastSynced": "2017-12-18T14:15:58.988Z",
+                "avatar_url": "https://avatars1.githubusercontent.com/u/4544461?v=4"
+            }
+        }
+
+### Get User Avatar [GET /users/{user}/avatar{?size,round}]
+
++ Parameters
+    + user (string, required)
+    + size (number, optional) - Image dimensions for width and height.
+        This can range from `48` to `512`.
+        + Default: `48`
+    + round (boolean, optional) - Whether to round the edges into a circle
+
++ Response 200 (image/png)
+
+        Binary data
+
+### Get User Repositories [GET /users/{user}/repos]
+
++ Parameters
+    + user (string, required)
+
++ Request
+    Gets the repositories of the user on GitHub. The user must be synchronized
+    with GitHub, otherwise an empty array is returned.
+
+    + Headers
+
+            session: secret-session
+
++ Response 200 (application/json)
+
+        [
+            {
+                "id": 106805299,
+                "name": "api.utopian.io",
+                "full_name": "utopian-io/api.utopian.io",
+                "owner": {
+                    "login": "utopian-io",
+                    "id": 18612062,
+                    "avatar_url": "https://avatars2.githubusercontent.com/u/18612062?v=4",
+                    "gravatar_id": "",
+                    "url": "https://api.github.com/users/utopian-io",
+                    "html_url": "https://github.com/utopian-io",
+                    "followers_url": "https://api.github.com/users/utopian-io/followers",
+                    "following_url": "https://api.github.com/users/utopian-io/following{/other_user}",
+                    "gists_url": "https://api.github.com/users/utopian-io/gists{/gist_id}",
+                    "starred_url": "https://api.github.com/users/utopian-io/starred{/owner}{/repo}",
+                    "subscriptions_url": "https://api.github.com/users/utopian-io/subscriptions",
+                    "organizations_url": "https://api.github.com/users/utopian-io/orgs",
+                    "repos_url": "https://api.github.com/users/utopian-io/repos",
+                    "events_url": "https://api.github.com/users/utopian-io/events{/privacy}",
+                    "received_events_url": "https://api.github.com/users/utopian-io/received_events",
+                    "type": "Organization",
+                    "site_admin": false
+                },
+                "private": false,
+                "html_url": "https://github.com/utopian-io/api.utopian.io",
+                "description": "Node API for Utopian.io - Utopian rewards open-source contributors for hard work!",
+                "fork": false,
+                "url": "https://api.github.com/repos/utopian-io/api.utopian.io",
+                "forks_url": "https://api.github.com/repos/utopian-io/api.utopian.io/forks",
+                "keys_url": "https://api.github.com/repos/utopian-io/api.utopian.io/keys{/key_id}",
+                "collaborators_url": "https://api.github.com/repos/utopian-io/api.utopian.io/collaborators{/collaborator}",
+                "teams_url": "https://api.github.com/repos/utopian-io/api.utopian.io/teams",
+                "hooks_url": "https://api.github.com/repos/utopian-io/api.utopian.io/hooks",
+                "issue_events_url": "https://api.github.com/repos/utopian-io/api.utopian.io/issues/events{/number}",
+                "events_url": "https://api.github.com/repos/utopian-io/api.utopian.io/events",
+                "assignees_url": "https://api.github.com/repos/utopian-io/api.utopian.io/assignees{/user}",
+                "branches_url": "https://api.github.com/repos/utopian-io/api.utopian.io/branches{/branch}",
+                "tags_url": "https://api.github.com/repos/utopian-io/api.utopian.io/tags",
+                "blobs_url": "https://api.github.com/repos/utopian-io/api.utopian.io/git/blobs{/sha}",
+                "git_tags_url": "https://api.github.com/repos/utopian-io/api.utopian.io/git/tags{/sha}",
+                "git_refs_url": "https://api.github.com/repos/utopian-io/api.utopian.io/git/refs{/sha}",
+                "trees_url": "https://api.github.com/repos/utopian-io/api.utopian.io/git/trees{/sha}",
+                "statuses_url": "https://api.github.com/repos/utopian-io/api.utopian.io/statuses/{sha}",
+                "languages_url": "https://api.github.com/repos/utopian-io/api.utopian.io/languages",
+                "stargazers_url": "https://api.github.com/repos/utopian-io/api.utopian.io/stargazers",
+                "contributors_url": "https://api.github.com/repos/utopian-io/api.utopian.io/contributors",
+                "subscribers_url": "https://api.github.com/repos/utopian-io/api.utopian.io/subscribers",
+                "subscription_url": "https://api.github.com/repos/utopian-io/api.utopian.io/subscription",
+                "commits_url": "https://api.github.com/repos/utopian-io/api.utopian.io/commits{/sha}",
+                "git_commits_url": "https://api.github.com/repos/utopian-io/api.utopian.io/git/commits{/sha}",
+                "comments_url": "https://api.github.com/repos/utopian-io/api.utopian.io/comments{/number}",
+                "issue_comment_url": "https://api.github.com/repos/utopian-io/api.utopian.io/issues/comments{/number}",
+                "contents_url": "https://api.github.com/repos/utopian-io/api.utopian.io/contents/{+path}",
+                "compare_url": "https://api.github.com/repos/utopian-io/api.utopian.io/compare/{base}...{head}",
+                "merges_url": "https://api.github.com/repos/utopian-io/api.utopian.io/merges",
+                "archive_url": "https://api.github.com/repos/utopian-io/api.utopian.io/{archive_format}{/ref}",
+                "downloads_url": "https://api.github.com/repos/utopian-io/api.utopian.io/downloads",
+                "issues_url": "https://api.github.com/repos/utopian-io/api.utopian.io/issues{/number}",
+                "pulls_url": "https://api.github.com/repos/utopian-io/api.utopian.io/pulls{/number}",
+                "milestones_url": "https://api.github.com/repos/utopian-io/api.utopian.io/milestones{/number}",
+                "notifications_url": "https://api.github.com/repos/utopian-io/api.utopian.io/notifications{?since,all,participating}",
+                "labels_url": "https://api.github.com/repos/utopian-io/api.utopian.io/labels{/name}",
+                "releases_url": "https://api.github.com/repos/utopian-io/api.utopian.io/releases{/id}",
+                "deployments_url": "https://api.github.com/repos/utopian-io/api.utopian.io/deployments",
+                "created_at": "2017-10-13T09:32:24Z",
+                "updated_at": "2018-01-18T17:22:06Z",
+                "pushed_at": "2018-01-18T20:45:42Z",
+                "git_url": "git://github.com/utopian-io/api.utopian.io.git",
+                "ssh_url": "git@github.com:utopian-io/api.utopian.io.git",
+                "clone_url": "https://github.com/utopian-io/api.utopian.io.git",
+                "svn_url": "https://github.com/utopian-io/api.utopian.io",
+                "homepage": "https://utopian.io/",
+                "size": 942,
+                "stargazers_count": 18,
+                "watchers_count": 18,
+                "language": "TypeScript",
+                "has_issues": true,
+                "has_projects": true,
+                "has_downloads": true,
+                "has_wiki": true,
+                "has_pages": false,
+                "forks_count": 21,
+                "mirror_url": null,
+                "archived": false,
+                "open_issues_count": 5,
+                "license": {
+                    "key": "mit",
+                    "name": "MIT License",
+                    "spdx_id": "MIT",
+                    "url": "https://api.github.com/licenses/mit"
+                },
+                "forks": 21,
+                "open_issues": 5,
+                "watchers": 18,
+                "default_branch": "master",
+                "organization": {
+                    "login": "utopian-io",
+                    "id": 18612062,
+                    "avatar_url": "https://avatars2.githubusercontent.com/u/18612062?v=4",
+                    "gravatar_id": "",
+                    "url": "https://api.github.com/users/utopian-io",
+                    "html_url": "https://github.com/utopian-io",
+                    "followers_url": "https://api.github.com/users/utopian-io/followers",
+                    "following_url": "https://api.github.com/users/utopian-io/following{/other_user}",
+                    "gists_url": "https://api.github.com/users/utopian-io/gists{/gist_id}",
+                    "starred_url": "https://api.github.com/users/utopian-io/starred{/owner}{/repo}",
+                    "subscriptions_url": "https://api.github.com/users/utopian-io/subscriptions",
+                    "organizations_url": "https://api.github.com/users/utopian-io/orgs",
+                    "repos_url": "https://api.github.com/users/utopian-io/repos",
+                    "events_url": "https://api.github.com/users/utopian-io/events{/privacy}",
+                    "received_events_url": "https://api.github.com/users/utopian-io/received_events",
+                    "type": "Organization",
+                    "site_admin": false
+                },
+                "network_count": 21,
+                "subscribers_count": 5
+            }
+        ]
+
+### Connect with GitHub [POST /users]
+
++ Request (application/json)
+    The results are the same as getting the user, with the additional GitHub
+    data.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + code (string, required) - OAuth code from GitHub
+        + state (string, required) - OAuth state from GitHub
+        + scopeVersion (number, required) - Scope version
+            The scope version should always be `6` unless a resynchronization
+            is required for the API to continue functioning properly.
+
++ Response 200 (application/json)
+
+        {
+            "account": "elear",
+            "banReason": "Ban Reason",
+            "bannedBy": "<utopian-system>",
+            "bannedUntil": "1970-01-01T00:00:00.000Z",
+            "banned": 0,
+            "details": {
+                "recoveryAccount": "steem",
+                "emailVerified": false,
+                "confirmed": true,
+                "connectedToSteem": true,
+                "votingForWitness": true
+            },
+            "github": {
+                "login": "diegopucci",
+                "account": "diegopucci",
+                "scopeVersion": 6,
+                "lastSynced": "2017-12-18T14:15:58.988Z",
+                "avatar_url": "https://avatars1.githubusercontent.com/u/4544461?v=4"
+            }
+        }
+
+### Get Ban Status [GET /users/{user}/ban]
+
++ Parameters
+    + user (string, required)
+
++ Request
+
+    + Headers
+
+            session: secret-session
+
++ Response 200 (application/json)
+
+        {
+            "account": "elear",
+            "banReason": "Ban Reason",
+            "bannedBy": "<utopian-system>",
+            "bannedUntil": "1970-01-01T00:00:00.000Z",
+            "banned": 0
+        }
+
+### Set Ban Status [POST /users/{user}/ban]
+
++ Parameters
+    + user (string, required)
+
++ Request (application/json)
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + banned (enum[number], required) - Ban status.
+            Setting this to `0` will effectively remove any ban status from the
+            user, regardless of the `bannedUntil` parameter.
+            + Members
+                + `0`
+                + `1`
+        + bannedBy (string, required) - Moderator who banned or unbanned the user.
+        + banReason (string, required) - Reason of the ban.
+        + bannedUntil (string, required) - ISO date string when the ban expires.
+
++ Response 200 (application/json)
+
+        {
+            "account": "elear",
+            "banReason": "elear can't be banned :)",
+            "bannedBy": "<utopian-system>",
+            "bannedUntil": "1970-01-01T00:00:00.000Z",
+            "banned": 0
+        }
+
+## Tables Collection [/tables]
+
+### Generate Table [GET /tables/{type}{?limit}]
+
++ Parameters
+    + type (enum[string], required) - Type of table to generate.
+        + Members
+            + `moderators`
+            + `sponsors`
+    + limit (number, optional) - Table entry limit
+        + Default: `6`
+
++ Response 200 (text/plain)
+
+        <table><tr></tr><tr><td><center><img src="https://api.utopian.io/api/users/ruah/avatar?round=true&size=50" style="border-radius:50%;"><br /><a target="_blank" href="//utopian.io/@ruah">@ruah</a></center></td><td><center><img src="https://api.utopian.io/api/users/espoem/avatar?round=true&size=50" style="border-radius:50%;"><br /><a target="_blank" href="//utopian.io/@espoem">@espoem</a></center></td></tr><tr><td><center><img src="https://api.utopian.io/api/users/knowledges/avatar?round=true&size=50" style="border-radius:50%;"><br /><a target="_blank" href="//utopian.io/@knowledges">@knowledges</a></center></td><td><center><img src="https://api.utopian.io/api/users/arie.steem/avatar?round=true&size=50" style="border-radius:50%;"><br /><a target="_blank" href="//utopian.io/@arie.steem">@arie.steem</a></center></td></tr><tr><td><center><img src="https://api.utopian.io/api/users/elear/avatar?round=true&size=50" style="border-radius:50%;"><br /><a target="_blank" href="//utopian.io/@elear">@elear</a></center></td><td><center><img src="https://api.utopian.io/api/users/damla/avatar?round=true&size=50" style="border-radius:50%;"><br /><a target="_blank" href="//utopian.io/@damla">@damla</a></center></td></tr></table>
+
+## SteemConnect2 Proxy [/sc2]
+
+This is a proxy of the SteemConnect2 API endpoints. The endpoints are
+exactly the same, for example `/api/sc2/broadcast` is the same as
+`https://v2.steemconnect.com/broadcast`. The endpoints documented below can also be
+be found at [the SC2 GitHub repo](https://github.com/steemit/steemconnect). The
+`session` header is required for authentication and is utilized to know which user
+to broadcast as.
+
+As previously mentioned, the API is fully capable of manipulating the STEEM
+blockchain. This proxy allows universal access to the blockchain without
+requiring multiple tokens on the client to access different parts of the API.
+
+### Get Profile [POST /sc2/profile]
+
++ Request (application/json)
+
+    + Headers
+
+            session: secret-session
+
++ Response 200 (application/json)
+
+        {
+            "user": "samrg472",
+            "_id": "samrg472",
+            "name": "samrg472",
+            "account": {
+                "id": 88173,
+                "name": "samrg472",
+                "owner": {
+                    "weight_threshold": 1,
+                    "account_auths": [],
+                    "key_auths": [
+                        [
+                            "STM7efPmPwp388rpo62dHCuUhHz18hS4CGiVXfannwasYesU3vXgT",
+                            1
+                        ]
+                    ]
+                },
+                "active": {
+                    "weight_threshold": 1,
+                    "account_auths": [],
+                    "key_auths": [
+                        [
+                            "STM7teDQeWkTtp5sGPMw196Sg8A51WDT1UgBUBK13GyAvzrwxzQMp",
+                            1
+                        ]
+                    ]
+                },
+                "posting": {
+                    "weight_threshold": 1,
+                    "account_auths": [
+                        [
+                            "busy.app",
+                            1
+                        ],
+                        [
+                            "steemdunk",
+                            1
+                        ],
+                        [
+                            "utopian.app",
+                            1
+                        ]
+                    ],
+                    "key_auths": [
+                        [
+                            "STM86JXbAjcr2mUKRFd1oLZzhKqzS33NYCJCKP2S7eLFEn2yjHp8C",
+                            1
+                        ]
+                    ]
+                },
+                "memo_key": "STM7LiFxkMm1FaUeGoiZyHio4eKd5s2qSAcVqx3UgF11fHPkPJA7L",
+                "json_metadata": "{\"profile\":{\"profile_image\":\"https://en.gravatar.com/userimage/15756408/1ff81c96aaa26b136195b631f10c421b.jpeg\",\"cover_image\":\"https://i.imgur.com/Pjg1bVy.jpg\"}}",
+                "proxy": "",
+                "last_owner_update": "2017-06-19T23:29:36",
+                "last_account_update": "2017-11-27T21:31:15",
+                "created": "2016-09-10T03:36:03",
+                "mined": false,
+                "owner_challenged": false,
+                "active_challenged": false,
+                "last_owner_proved": "1970-01-01T00:00:00",
+                "last_active_proved": "1970-01-01T00:00:00",
+                "recovery_account": "steem",
+                "last_account_recovery": "1970-01-01T00:00:00",
+                "reset_account": "null",
+                "comment_count": 0,
+                "lifetime_vote_count": 0,
+                "post_count": 331,
+                "can_vote": true,
+                "voting_power": 8276,
+                "last_vote_time": "2018-01-19T16:15:42",
+                "balance": "0.000 STEEM",
+                "savings_balance": "0.000 STEEM",
+                "sbd_balance": "0.022 SBD",
+                "sbd_seconds": "4915182",
+                "sbd_seconds_last_update": "2018-01-18T16:00:54",
+                "sbd_last_interest_payment": "2017-12-22T21:57:54",
+                "savings_sbd_balance": "0.000 SBD",
+                "savings_sbd_seconds": "0",
+                "savings_sbd_seconds_last_update": "1970-01-01T00:00:00",
+                "savings_sbd_last_interest_payment": "1970-01-01T00:00:00",
+                "savings_withdraw_requests": 0,
+                "reward_sbd_balance": "0.000 SBD",
+                "reward_steem_balance": "0.000 STEEM",
+                "reward_vesting_balance": "200.641969 VESTS",
+                "reward_vesting_steem": "0.098 STEEM",
+                "vesting_shares": "4569759.621394 VESTS",
+                "delegated_vesting_shares": "4095399.642390 VESTS",
+                "received_vesting_shares": "102692.407512 VESTS",
+                "vesting_withdraw_rate": "0.000000 VESTS",
+                "next_vesting_withdrawal": "1969-12-31T23:59:59",
+                "withdrawn": 0,
+                "to_withdraw": 0,
+                "withdraw_routes": 0,
+                "curation_rewards": 17238,
+                "posting_rewards": 418996,
+                "proxied_vsf_votes": [
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "witnesses_voted_for": 1,
+                "average_bandwidth": "40956661713",
+                "lifetime_bandwidth": "911610000000",
+                "last_bandwidth_update": "2018-01-19T16:15:42",
+                "average_market_bandwidth": 1130000000,
+                "lifetime_market_bandwidth": "146830000000",
+                "last_market_bandwidth_update": "2018-01-15T17:00:15",
+                "last_post": "2018-01-18T21:56:30",
+                "last_root_post": "2018-01-18T19:14:36",
+                "vesting_balance": "0.000 STEEM",
+                "reputation": "4524057847288",
+                "transfer_history": [],
+                "market_history": [],
+                "post_history": [],
+                "vote_history": [],
+                "other_history": [],
+                "witness_votes": [
+                    "utopian-io"
+                ],
+                "tags_usage": [],
+                "guest_bloggers": []
+            },
+            "scope": [
+                "vote",
+                "comment",
+                "comment_delete",
+                "comment_options",
+                "custom_json",
+                "claim_reward_balance",
+                "offline"
+            ],
+            "user_metadata": {}
+        }
+
+### Update Profile [PUT /sc2/profile]
+
++ Request (application/json)
+    Updates the `user_metadata` of the profile.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + user_metadata (object, required) - Profile `user_metadata` to store.
+
++ Response 200 (application/json)
+
+                {
+            "user": "samrg472",
+            "_id": "samrg472",
+            "name": "samrg472",
+            "account": {
+                "id": 88173,
+                "name": "samrg472",
+                "owner": {
+                    "weight_threshold": 1,
+                    "account_auths": [],
+                    "key_auths": [
+                        [
+                            "STM7efPmPwp388rpo62dHCuUhHz18hS4CGiVXfannwasYesU3vXgT",
+                            1
+                        ]
+                    ]
+                },
+                "active": {
+                    "weight_threshold": 1,
+                    "account_auths": [],
+                    "key_auths": [
+                        [
+                            "STM7teDQeWkTtp5sGPMw196Sg8A51WDT1UgBUBK13GyAvzrwxzQMp",
+                            1
+                        ]
+                    ]
+                },
+                "posting": {
+                    "weight_threshold": 1,
+                    "account_auths": [
+                        [
+                            "busy.app",
+                            1
+                        ],
+                        [
+                            "steemdunk",
+                            1
+                        ],
+                        [
+                            "utopian.app",
+                            1
+                        ]
+                    ],
+                    "key_auths": [
+                        [
+                            "STM86JXbAjcr2mUKRFd1oLZzhKqzS33NYCJCKP2S7eLFEn2yjHp8C",
+                            1
+                        ]
+                    ]
+                },
+                "memo_key": "STM7LiFxkMm1FaUeGoiZyHio4eKd5s2qSAcVqx3UgF11fHPkPJA7L",
+                "json_metadata": "{\"profile\":{\"profile_image\":\"https://en.gravatar.com/userimage/15756408/1ff81c96aaa26b136195b631f10c421b.jpeg\",\"cover_image\":\"https://i.imgur.com/Pjg1bVy.jpg\"}}",
+                "proxy": "",
+                "last_owner_update": "2017-06-19T23:29:36",
+                "last_account_update": "2017-11-27T21:31:15",
+                "created": "2016-09-10T03:36:03",
+                "mined": false,
+                "owner_challenged": false,
+                "active_challenged": false,
+                "last_owner_proved": "1970-01-01T00:00:00",
+                "last_active_proved": "1970-01-01T00:00:00",
+                "recovery_account": "steem",
+                "last_account_recovery": "1970-01-01T00:00:00",
+                "reset_account": "null",
+                "comment_count": 0,
+                "lifetime_vote_count": 0,
+                "post_count": 331,
+                "can_vote": true,
+                "voting_power": 8276,
+                "last_vote_time": "2018-01-19T16:15:42",
+                "balance": "0.000 STEEM",
+                "savings_balance": "0.000 STEEM",
+                "sbd_balance": "0.022 SBD",
+                "sbd_seconds": "4915182",
+                "sbd_seconds_last_update": "2018-01-18T16:00:54",
+                "sbd_last_interest_payment": "2017-12-22T21:57:54",
+                "savings_sbd_balance": "0.000 SBD",
+                "savings_sbd_seconds": "0",
+                "savings_sbd_seconds_last_update": "1970-01-01T00:00:00",
+                "savings_sbd_last_interest_payment": "1970-01-01T00:00:00",
+                "savings_withdraw_requests": 0,
+                "reward_sbd_balance": "0.000 SBD",
+                "reward_steem_balance": "0.000 STEEM",
+                "reward_vesting_balance": "200.641969 VESTS",
+                "reward_vesting_steem": "0.098 STEEM",
+                "vesting_shares": "4569759.621394 VESTS",
+                "delegated_vesting_shares": "4095399.642390 VESTS",
+                "received_vesting_shares": "102692.407512 VESTS",
+                "vesting_withdraw_rate": "0.000000 VESTS",
+                "next_vesting_withdrawal": "1969-12-31T23:59:59",
+                "withdrawn": 0,
+                "to_withdraw": 0,
+                "withdraw_routes": 0,
+                "curation_rewards": 17238,
+                "posting_rewards": 418996,
+                "proxied_vsf_votes": [
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "witnesses_voted_for": 1,
+                "average_bandwidth": "40956661713",
+                "lifetime_bandwidth": "911610000000",
+                "last_bandwidth_update": "2018-01-19T16:15:42",
+                "average_market_bandwidth": 1130000000,
+                "lifetime_market_bandwidth": "146830000000",
+                "last_market_bandwidth_update": "2018-01-15T17:00:15",
+                "last_post": "2018-01-18T21:56:30",
+                "last_root_post": "2018-01-18T19:14:36",
+                "vesting_balance": "0.000 STEEM",
+                "reputation": "4524057847288",
+                "transfer_history": [],
+                "market_history": [],
+                "post_history": [],
+                "vote_history": [],
+                "other_history": [],
+                "witness_votes": [
+                    "utopian-io"
+                ],
+                "tags_usage": [],
+                "guest_bloggers": []
+            },
+            "scope": [
+                "vote",
+                "comment",
+                "comment_delete",
+                "comment_options",
+                "custom_json",
+                "claim_reward_balance",
+                "offline"
+            ],
+            "user_metadata": {}
+        }
+
+### Broadcast Operation [POST /sc2/broadcast]
+
++ Request (application/json)
+    Performs operations on the STEEM blockchain, such as voting and commenting.
+    The operations that can be performed is restricted to the `posting` role.
+    Responses vary based on the type of operation broadcasted to the blockchain.
+
+    + Headers
+
+            session: secret-session
+
+    + Attributes
+        + operations (array, required) - Array of Steem operations to perform.
+
++ Response 200 (application/json)

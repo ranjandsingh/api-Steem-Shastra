@@ -1,0 +1,24 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Editors
+.idea
+.vscode
+
+# Compiled files
+dist
+
+# Dependencies
+node_modules
+
+# Environment files
+.env
+
+# Private Certs
+*.pem
